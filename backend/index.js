@@ -51,9 +51,29 @@ app.post('/verses', async (req, res) => {
     return res.status(400).json({ error: 'Title and content are required.' });
   }
   try {
+    // Check for duplicate title
+    const existing = await versesCollection.findOne({ title });
+    if (existing) {
+      return res.status(409).json({ error: 'Verse already exists.' });
+    }
     const result = await versesCollection.insertOne({ title, content });
     res.status(201).json({ id: result.insertedId, title, content });
   } catch (err) {
     res.status(500).json({ error: 'Failed to add verse' });
+  }
+});
+
+// Add a DELETE endpoint to delete a verse by id
+app.delete('/verses/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await versesCollection.deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 1) {
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'Verse not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete verse' });
   }
 });
