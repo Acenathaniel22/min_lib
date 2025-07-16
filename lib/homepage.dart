@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
       _isLoading = true;
     });
     final response = await http.get(
-      Uri.parse('http://192.168.195.57:3000/verses'),
+      Uri.parse('http://192.168.195.63:3000/verses'),
     );
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
@@ -268,6 +268,7 @@ class _HomePageState extends State<HomePage> {
                         padding: EdgeInsets.zero,
                         controller: _scrollController,
                         children: [
+                          SizedBox(height: 20), // Add space at the top
                           if (oldVerses.isNotEmpty) ...[
                             _SectionHeader(
                               title: 'Old Testament',
@@ -308,44 +309,49 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      floatingActionButton: SizedBox(
-        height: 54,
-        child: ElevatedButton.icon(
-          onPressed: () async {
-            final result = await Navigator.pushNamed(context, '/addverse');
-            if (result == true) {
-              _fetchVerses();
-            }
-          },
-          icon: Icon(Icons.menu_book_rounded, color: Colors.white, size: 24),
-          label: Text(
-            'Add Verse',
-            style: TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 0.5,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF7B2F2F), Color(0xFFB24545)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.redAccent.withOpacity(0.18),
+              blurRadius: 16,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: SizedBox(
+          height: 58,
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final result = await Navigator.pushNamed(context, '/addverse');
+              if (result == true) {
+                _fetchVerses();
+              }
+            },
+            icon: Icon(Icons.add, color: Colors.white, size: 28),
+            label: Text(
+              'Add Verse',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+              shape: StadiumBorder(),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
             ),
           ),
-          style:
-              ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                elevation: 7,
-                shadowColor: Colors.brown.withOpacity(0.18),
-                backgroundColor: const Color(0xFF7B2F2F), // Rich maroon
-              ).copyWith(
-                backgroundColor: MaterialStateProperty.resolveWith<Color>((
-                  states,
-                ) {
-                  if (states.contains(MaterialState.pressed)) {
-                    return const Color(0xFF5A2323); // Darker maroon on press
-                  }
-                  return const Color(0xFF7B2F2F); // Default
-                }),
-              ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -376,7 +382,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _deleteVerse(String id) async {
-    final url = Uri.parse('http://192.168.195.57:3000/verses/$id');
+    final url = Uri.parse('http://192.168.195.63:3000/verses/$id');
     final response = await http.delete(url);
     if (response.statusCode == 200) {
       final idx = _verses.indexWhere((v) => v.id == id);
@@ -425,41 +431,40 @@ class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title, required this.color});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 18.0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.18),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.25), width: 1),
+    IconData icon = title.contains('Old')
+        ? Icons.auto_stories_rounded
+        : Icons.menu_book_rounded;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: color, size: 28),
+            SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: color,
+                letterSpacing: 1.1,
+              ),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.book_rounded,
-                  color: color.withOpacity(0.7),
-                  size: 22,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: color.withOpacity(0.85),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
+          ],
+        ),
+        SizedBox(height: 6),
+        Container(
+          height: 3,
+          width: 80,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color.withOpacity(0.5), color.withOpacity(0.1)],
             ),
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
-      ),
+        SizedBox(height: 10),
+      ],
     );
   }
 }
@@ -482,113 +487,129 @@ class _VerseCard extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: accent.withOpacity(0.18), width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 18,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          verse.title,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: accent.withOpacity(0.85),
-                            letterSpacing: 0.2,
-                            shadows: [
-                              Shadow(
-                                color: Colors.white.withOpacity(0.2),
-                                blurRadius: 2,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          verse.content,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            color: Colors.black87,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
+    // Choose icon and gradient based on accent color (testament)
+    final isOld = accent == Colors.deepOrange;
+    final gradient = LinearGradient(
+      colors: isOld
+          ? [Colors.orange.shade100, Colors.orange.shade50]
+          : [Colors.indigo.shade100, Colors.indigo.shade50],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+    final icon = isOld ? Icons.auto_stories_rounded : Icons.menu_book_rounded;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.92, end: 1),
+      duration: Duration(milliseconds: 400),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) =>
+          Transform.scale(scale: scale, child: child),
+      child: Card(
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        margin: EdgeInsets.only(bottom: 28),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withOpacity(0.13),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Leading icon
+                Container(
+                  decoration: BoxDecoration(
+                    color: accent.withOpacity(0.13),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(width: 8),
-                  // Favorite icon (only if showFavorite is true)
-                  if (showFavorite && onFavorite != null) ...[
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: onFavorite,
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.10),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isFavorite
-                                ? Icons.star_rounded
-                                : Icons.star_border_rounded,
-                            color: isFavorite
-                                ? Colors.amber[800]
-                                : Colors.grey[400],
-                            size: 22,
-                          ),
+                  padding: EdgeInsets.all(10),
+                  child: Icon(icon, color: accent, size: 28),
+                ),
+                SizedBox(width: 16),
+                // Verse content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        verse.title,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: accent,
+                          letterSpacing: 0.3,
+                          fontFamily: 'Georgia',
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  // Delete icon (in favorites, this means unfavorite)
+                      const SizedBox(height: 12),
+                      Text(
+                        verse.content,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          color: Colors.black87,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Favorite icon (only if showFavorite is true)
+                if (showFavorite && onFavorite != null)
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(20),
-                      onTap: onDelete,
+                      onTap: onFavorite,
                       child: Container(
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.10),
+                          color: Colors.amber.withOpacity(0.10),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.delete_outline,
-                          color: Colors.red[400],
+                          isFavorite
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: isFavorite
+                              ? Colors.amber[700]
+                              : Colors.amber[300],
                           size: 22,
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                // Delete icon
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: onDelete,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.10),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.delete_outline,
+                        color: Colors.red[400],
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
